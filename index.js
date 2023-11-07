@@ -1,56 +1,33 @@
-const TelegramBot = require('node-telegram-bot-api')
-const axios = require('axios');
-const token = "6593497942:AAEXvOthtull92Zzq2-Iurpjlojxf4vPsdQ"
-const bot = new TelegramBot(token, { polling: true })
-const userinfo = require('./userinfo.js')
-const startactions = require('./startactions.js')
-const regionsforfind = require('./regionsforfind.js')
-const regionsforpublicate = require('./regionsforpublicate.js')
+const Telegraf = require('telegraf')
+const {
+  Extra,
+  Markup,
+  Stage,
+  session
+} = Telegraf
+const config = require('config')
+const bot = new Telegraf(config.get('token'))
+const SceneGenerator = require('./Scenes')
+const curScene = new SceneGenerator()
+const ageScene = curScene.GenAgeScene()
+const nameScene = curScene.GenNameScene()
 
-bot.setMyCommands([
-  {
-    command: '/start', description: 'Запустить бота'
-  },
-  {
-    command: '/info', description: 'Информация о пользователе'
-  }
-]
-)
+bot.use(Telegraf.log())
 
-bot.on('message', msg => {
+const stage = new Stage([ageScene, nameScene])
 
-  console.table(msg)
-  if (msg.text == '/info') {
-    bot.sendMessage(msg.chat.id, userinfo.userinfo(msg))
-  }
+bot.use(session())
+bot.use(stage.middleware())
 
-  if (msg.text == '/start') {
-    bot.sendMessage(msg.chat.id, "Выберите интересующее действие", startactions.startactions)
-  }
-
-  bot.on('callback_query', msg => {
-    const data = msg.data;
-    const chatId = msg.message.chat.id;
-
-    if (data == "Find") {
-      return bot.sendMessage(chatId, 'Выберите регион', regionsforfind.regionsforfind)
-    }
-    if (data == "Publicate") {
-      return bot.sendMessage(chatId, 'Выберите регион публикации', regionsforpublicate.regionsforpublicate)
-    }
-    if (data == "ToMenu") {
-      return bot.sendMessage(chatId, "Выберите интересующее действие", startactions.startactions)
-    }
-    bot.sendMessage(chatId, data)
-  })
-
+bot.start((ctx) => ctx.reply('Welcome'))
+bot.help((ctx) => ctx.reply('Send me a sticker'))
+bot.command('echo', (ctx) => ctx.reply('Echo'))
+bot.command('scenes', async (ctx) => {
+  ctx.scene.enter('age')
 })
-
-// bot.sendPhoto(msg.chat.id, 'https://example1.onlinestores.uz/wp-content/uploads/2023/10/icons8-small-60.png')
-// axios.get(`https://jsonplaceholder.typicode.com/todos/1`)
-//   .then(json => bot.sendMessage(msg.chat.id, json.data.title))
-
-// axios.get(`https://jsonplaceholder.typicode.com/todos/1`)
-//   .then(json => bot.sendMessage(msg.chat.id, json.data.title))
-
-// bot.sendPhoto(msg.chat.id, 'https://example1.onlinestores.uz/wp-content/uploads/2023/10/icons8-small-60.png')
+bot.command('state', async (ctx) => {
+  console.log(ctx.session)
+})
+bot.on('sticker', (ctx) => ctx.reply('👍'))
+bot.hears('hi', (ctx) => ctx.reply('Hey there'))
+bot.launch()
