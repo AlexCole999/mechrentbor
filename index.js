@@ -11,10 +11,11 @@ const SceneGenerator = require('./Scenes')
 const curScene = new SceneGenerator()
 const ageScene = curScene.GenAgeScene()
 const nameScene = curScene.GenNameScene()
+const priceScene = curScene.GenPriceScene()
 
 bot.use(Telegraf.log())
 
-const stage = new Stage([ageScene, nameScene])
+const stage = new Stage([ageScene, nameScene, priceScene])
 
 bot.use(session())
 bot.use(stage.middleware())
