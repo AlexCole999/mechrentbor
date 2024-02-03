@@ -4,8 +4,19 @@ const config = require('config')
 const bot = new Telegraf(config.get('token'))
 const axios = require('axios');
 const { clientText } = require('./clientText.js');
+const SceneGenerator = require('./Scenes')
+
+const curScene = new SceneGenerator()
+const ageScene = curScene.GenAgeScene()
+const nameScene = curScene.GenNameScene()
+const priceScene = curScene.GenPriceScene()
+
+
+const stage = new Stage([ageScene, nameScene, priceScene])
 
 bot.use(session())
+bot.use(stage.middleware())
+
 
 function showMainMenu(ctx) {
   ctx.reply('Главное меню:',
@@ -71,5 +82,13 @@ bot.hears('Акции', async (ctx) => { ctx.reply(`${clientText.actions}`) })
 bot.hears(['Контакты'], (ctx) => { showContactOptions(ctx); });
 
 bot.hears(['Оставить отзыв'], (ctx) => { showTestimonialsMenu(ctx); });
+
+bot.command('state', async (ctx) => {
+  console.log(ctx.session)
+})
+
+bot.hears("🤩 Все чудесно, спасибо, 5⭐️⭐️⭐️⭐️⭐️", async (ctx) => {
+  ctx.scene.enter('age')
+})
 
 bot.launch()

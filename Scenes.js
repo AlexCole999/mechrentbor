@@ -45,12 +45,12 @@ class SceneGenerator {
     GenPriceScene() {
         const price = new Scene('price')
         price.enter(async (ctx) => {
-            await ctx.reply('Привет! Ты вошел в сцену цены. ЦЕНУ СУКА!')
+            await ctx.reply('Привет! Ты вошел в сцену цены!')
         })
         price.on('text', async (ctx) => {
             const price = Number(ctx.message.text)
             if (price && price > 0) {
-                await ctx.reply('уранахой!!')
+                await ctx.reply('ура!!')
                 ctx.session.state = { ...ctx.session.state, price: price }
                 console.log(ctx.session)
                 await ctx.scene.leave()
