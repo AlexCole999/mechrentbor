@@ -1,6 +1,7 @@
 const Scene = require('telegraf/scenes/base')
 const Telegraf = require('telegraf')
 const { Markup } = Telegraf
+const { clientText } = require('./clientText.js');
 
 function showMainMenu(ctx) {
     ctx.reply('Открыто главное меню',
@@ -62,19 +63,26 @@ class SceneGenerator {
         testimonials.on('text', async (ctx) => {
 
             const testimonial = ctx.message.text;
-            console.log(testimonial)
 
             if (testimonial !== "↩️ Назад") {
 
-                ctx.session.state = { ...ctx.session.state, testimonial: testimonial }
+                if (!ctx?.session?.state?.rating) {
 
-                await ctx.reply(`Вы поставили оценку: ${ctx.session.state.rating}!\nТекст отзыва: ${ctx.session.state.testimonial}\n\nОтзыв успешно отправлен!`)
+                    await ctx.reply('Вы не выбрали оценку. Пожалуйста, перед написанием отзыва выберите один из вариантов')
+                    await ctx.scene.reenter()
 
-                if (ctx.session.state.rating > 3) { await showTestimonialOptions(ctx) }
+                } else {
 
-                await showMainMenu(ctx)
+                    ctx.session.state = { ...ctx.session.state, testimonial: testimonial }
+                    await ctx.reply(`Вы поставили оценку: ${ctx.session.state.rating}!\nТекст отзыва: ${ctx.session.state.testimonial}\n\nОтзыв успешно отправлен!`)
+                    await showMainMenu(ctx)
 
-                await ctx.scene.leave()
+                    if (ctx.session.state.rating > 3) { await ctx.replyWithHTML(clientText.TestimonialMsg) }
+
+                    ctx.session.state = {}
+                    await ctx.scene.leave()
+
+                }
 
             } else {
                 await ctx.scene.leave();
@@ -119,7 +127,7 @@ class SceneGenerator {
                 console.log(ctx.session)
                 await ctx.scene.leave()
             } else {
-                await ctx.reply('ценудалнахуй')
+                await ctx.reply('цену')
                 ctx.scene.reenter()
             }
         })
