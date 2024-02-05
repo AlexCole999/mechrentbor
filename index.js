@@ -7,19 +7,18 @@ const { clientText } = require('./clientText.js');
 const SceneGenerator = require('./Scenes')
 
 const curScene = new SceneGenerator()
-const ageScene = curScene.GenAgeScene()
+const testimonialScene = curScene.GenTestimonialScene()
 const nameScene = curScene.GenNameScene()
 const priceScene = curScene.GenPriceScene()
 
 
-const stage = new Stage([ageScene, nameScene, priceScene])
+const stage = new Stage([testimonialScene])
 
 bot.use(session())
 bot.use(stage.middleware())
 
-
 function showMainMenu(ctx) {
-  ctx.reply('Главное меню:',
+  ctx.reply('Открыто главное меню',
     Markup.keyboard([
       [{ text: "Кешбэк", request_contact: true, }, 'Меню'],
       ['Акции', 'Контакты'],
@@ -40,7 +39,7 @@ function showContactOptions(ctx) {
 }
 
 function showTestimonialsMenu(ctx) {
-  ctx.reply('Оставьте отзыв',
+  ctx.reply('Благодарим за ваш выбор! Пожалуйста, оцените качество сервиса и продукта от 1 до 5.',
     Markup.keyboard([
       ["🤩 Все чудесно, спасибо, 5⭐️⭐️⭐️⭐️⭐️"],
       ["😏 Все хорошо, но на 4⭐️⭐️⭐️⭐️"],
@@ -81,14 +80,9 @@ bot.hears('Акции', async (ctx) => { ctx.reply(`${clientText.actions}`) })
 
 bot.hears(['Контакты'], (ctx) => { showContactOptions(ctx); });
 
-bot.hears(['Оставить отзыв'], (ctx) => { showTestimonialsMenu(ctx); });
-
-bot.command('state', async (ctx) => {
-  console.log(ctx.session)
-})
-
-bot.hears("🤩 Все чудесно, спасибо, 5⭐️⭐️⭐️⭐️⭐️", async (ctx) => {
-  ctx.scene.enter('age')
-})
+bot.hears(['Оставить отзыв'], (ctx) => {
+  ctx.scene.enter('testimonials');
+  showTestimonialsMenu(ctx);
+});
 
 bot.launch()
