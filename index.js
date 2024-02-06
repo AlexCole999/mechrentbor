@@ -53,24 +53,27 @@ function showTestimonialsMenu(ctx) {
 
 bot.start(async (ctx) => { showMainMenu(ctx); })
 
+async function getToken() {
+  const url = "https://api-ru.iiko.services/api/1/access_token";
+  const body = { apiLogin: "74913501-9de" };
+  const headers = { Timeout: "60" };
+  let token = await axios.post(url, body, { headers });
+  return token
+}
+
 bot.on("contact", async (ctx) => {
   const url = "https://api-ru.iiko.services/api/1/loyalty/iiko/customer/info";
-  const urlapi = "https://api-ru.iiko.services/api/1/access_token";
-  const headersapi = { Timeout: "60" };
-  const bodyapi = { apiLogin: "74913501-9de" };
-  let headers = { "Authorization": "", "Timeout": "60", "Content-Type": "application/json", };
   const body = { phone: `${ctx.message.contact.phone_number}`, type: "phone", organizationId: "bbb98635-9a82-47d6-ac11-70e949865385", };
-  let apikey = await axios.post(urlapi, bodyapi, { headersapi })
-  headers.Authorization = `Bearer ${apikey?.data?.token}`;
+  const headers = { "Authorization": "", "Timeout": "60", "Content-Type": "application/json", };
+  const token = await getToken()
+  headers.Authorization = `Bearer ${token?.data?.token}`;
   try {
     let result = await axios.post(url, body, { headers });
-    ctx.reply(`Номер карты: ${ctx?.message?.contact?.phone_number}\nБаланс на счету: ${result?.data?.walletBalances[0]?.balance ? result?.data?.walletBalances[0]?.balance : '0'}`)
+    await ctx.reply(`Номер карты: ${result?.data?.phone}\nБаланс на счету: ${result?.data?.walletBalances[0]?.balance ? result?.data?.walletBalances[0]?.balance : '0'}`)
   } catch { ctx.reply(`Номер счета не найден в системе`) }
 });
 
-bot.hears('Главное меню', (ctx) => { showMainMenu(ctx); });
-
-bot.hears('↩️ Назад', (ctx) => { showMainMenu(ctx); });
+bot.hears('1', async (ctx) => { let some = await getToken(); console.log(some.data.token) });
 
 bot.hears('Кешбэк', (ctx) => { ctx.reply('Предоставить номер телефона:', Markup.keyboard([Markup.contactRequestButton('Отправить номер')]).resize().extra()); });
 
@@ -80,9 +83,10 @@ bot.hears('Акции', async (ctx) => { ctx.reply(`${clientText.actions}`) })
 
 bot.hears(['Контакты'], (ctx) => { showContactOptions(ctx); });
 
-bot.hears(['Оставить отзыв'], (ctx) => {
-  ctx.scene.enter('testimonials');
-  showTestimonialsMenu(ctx);
-});
+bot.hears(['Оставить отзыв'], (ctx) => { ctx.scene.enter('testimonials'); showTestimonialsMenu(ctx); });
+
+bot.hears('Главное меню', (ctx) => { showMainMenu(ctx); });
+
+bot.hears('↩️ Назад', (ctx) => { showMainMenu(ctx); });
 
 bot.launch()

@@ -56,9 +56,6 @@ class SceneGenerator {
             ctx.session.state = { ...ctx?.session?.state, rating: '1' }
             ctx.reply('Вы поставили оценку 1!\nПожалуйста, напишите нам, что вы думаете о нас!')
         })
-        testimonials.hears("state", async (ctx) => {
-            console.log(ctx.session.state)
-        })
 
         testimonials.on('text', async (ctx) => {
 
@@ -85,9 +82,9 @@ class SceneGenerator {
                 }
 
             } else {
+                ctx.session.state = {}
                 await ctx.scene.leave();
                 await showMainMenu(ctx);
-
             }
         })
 
