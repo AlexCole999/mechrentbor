@@ -5,12 +5,32 @@ const bot = new Telegraf(config.get('token'))
 const axios = require('axios');
 const { clientText } = require('./clientText.js');
 const SceneGenerator = require('./Scenes')
+const nodemailer = require('nodemailer')
 
 const curScene = new SceneGenerator()
 const testimonialScene = curScene.GenTestimonialScene()
 const nameScene = curScene.GenNameScene()
 const priceScene = curScene.GenPriceScene()
 
+const transporter = nodemailer.createTransport({
+  host: 'smtp.elasticemail.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: 'myata.platinum.tashkent@gmail.com',
+    pass: '560DE1217307AA88717ADD4C4823F6D13ACA'
+  }
+})
+
+
+bot.hears('1', async (ctx) => {
+  let some = await transporter.sendMail({
+    from: 'myata.platinum.tashkent@gmail.com',
+    to: 'leonid.samograew@gmail.com',
+    subject: 'telegram testimonial'
+  })
+  console.log(some)
+});
 
 const stage = new Stage([testimonialScene])
 
@@ -72,8 +92,6 @@ bot.on("contact", async (ctx) => {
     await ctx.reply(`Номер карты: ${result?.data?.phone}\nБаланс на счету: ${result?.data?.walletBalances[0]?.balance ? result?.data?.walletBalances[0]?.balance : '0'}`)
   } catch { ctx.reply(`Номер счета не найден в системе`) }
 });
-
-bot.hears('1', async (ctx) => { let some = await getToken(); console.log(some.data.token) });
 
 bot.hears('Кешбэк', (ctx) => { ctx.reply('Предоставить номер телефона:', Markup.keyboard([Markup.contactRequestButton('Отправить номер')]).resize().extra()); });
 
