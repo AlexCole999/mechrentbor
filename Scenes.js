@@ -2,6 +2,7 @@ const Scene = require('telegraf/scenes/base')
 const Telegraf = require('telegraf')
 const { Markup } = Telegraf
 const { clientText } = require('./clientText.js');
+const nodemailer = require('nodemailer')
 
 function showMainMenu(ctx) {
     ctx.reply('Открыто главное меню',
@@ -26,6 +27,16 @@ function showTestimonialOptions(ctx) {
     });
 }
 
+const transporter = nodemailer.createTransport({
+    host: 'smtp.elasticemail.com',
+    port: 465,
+    secure: true,
+    auth: {
+        user: 'myata.platinum.tashkent@gmail.com',
+        pass: '560DE1217307AA88717ADD4C4823F6D13ACA'
+    }
+})
+
 class SceneGenerator {
 
     GenTestimonialScene() {
@@ -37,41 +48,60 @@ class SceneGenerator {
         })
 
         testimonials.hears("🤩 Все чудесно, спасибо, 5⭐️⭐️⭐️⭐️⭐️", async (ctx) => {
-            ctx.session.state = { ...ctx?.session?.state, rating: '5' }
+            ctx.session.state = { ...ctx?.session?.state, rating: '5' };
+            console.log('testimonials click 5');
             ctx.reply('Вы поставили оценку 5!\nПожалуйста, напишите нам, что вы думаете о нас!')
         })
         testimonials.hears("😏 Все хорошо, но на 4⭐️⭐️⭐️⭐️", async (ctx) => {
-            ctx.session.state = { ...ctx?.session?.state, rating: '4' }
+            ctx.session.state = { ...ctx?.session?.state, rating: '4' };
+            console.log('testimonials click 4');
             ctx.reply('Вы поставили оценку 4!\nПожалуйста, напишите нам, что вы думаете о нас!')
         })
         testimonials.hears("😐 Удовлетворительно, на 3⭐️⭐️⭐️", async (ctx) => {
-            ctx.session.state = { ...ctx?.session?.state, rating: '3' }
+            ctx.session.state = { ...ctx?.session?.state, rating: '3' };
+            console.log('testimonials click 3');
             ctx.reply('Вы поставили оценку 3!\nПожалуйста, напишите нам, что вы думаете о нас!')
         })
         testimonials.hears("😒 Не понравилось, на 2⭐️⭐️", async (ctx) => {
-            ctx.session.state = { ...ctx?.session?.state, rating: '2' }
+            ctx.session.state = { ...ctx?.session?.state, rating: '2' };
+            console.log('testimonials click 2');
             ctx.reply('Вы поставили оценку 2!\nПожалуйста, напишите нам, что вы думаете о нас!')
         })
         testimonials.hears("😡 Оставить жалобу, 1⭐️", async (ctx) => {
-            ctx.session.state = { ...ctx?.session?.state, rating: '1' }
+            ctx.session.state = { ...ctx?.session?.state, rating: '1' };
+            console.log('testimonials click 1');
             ctx.reply('Вы поставили оценку 1!\nПожалуйста, напишите нам, что вы думаете о нас!')
         })
 
         testimonials.on('text', async (ctx) => {
 
             const testimonial = ctx.message.text;
+            console.log('entered testimonian text');
 
             if (testimonial !== "↩️ Назад") {
 
                 if (!ctx?.session?.state?.rating) {
 
+                    console.log('testimonial entered text before rating');
                     await ctx.reply('Вы не выбрали оценку. Пожалуйста, перед написанием отзыва выберите один из вариантов')
                     await ctx.scene.reenter()
 
                 } else {
 
                     ctx.session.state = { ...ctx.session.state, testimonial: testimonial }
-                    await ctx.reply(`Вы поставили оценку: ${ctx.session.state.rating}!\nТекст отзыва: ${ctx.session.state.testimonial}\n\nОтзыв успешно отправлен!`)
+
+                    const resultResponseForUser = `Вы поставили оценку: ${ctx.session.state.rating}!\nТекст отзыва: ${ctx.session.state.testimonial}`
+                    const resultResponseForOwner = `Вам поставили оценку: ${ctx.session.state.rating}!\nТекст отзыва: ${ctx.session.state.testimonial}`
+
+                    console.log('testimonial text entered');
+
+                    await transporter.sendMail({
+                        from: 'myata.platinum.tashkent@gmail.com',
+                        to: 'myatatashkent@yandex.ru',
+                        subject: `Гость поставил оценку ${ctx.session.state.rating}`,
+                        text: `${resultResponseForOwner}`
+                    }).then(() => { ctx.reply(`${resultResponseForUser}\n\n Отзыв успешно отправлен!`); console.log('testimonial sended to clients mail') })
+
                     await showMainMenu(ctx)
 
                     if (ctx.session.state.rating > 3) { await ctx.replyWithHTML(clientText.TestimonialMsg) }
@@ -82,6 +112,7 @@ class SceneGenerator {
                 }
 
             } else {
+                console.log('click testimonial назад');
                 ctx.session.state = {}
                 await ctx.scene.leave();
                 await showMainMenu(ctx);

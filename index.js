@@ -36,8 +36,16 @@ const stage = new Stage([testimonialScene])
 
 bot.use(session())
 bot.use(stage.middleware())
+bot.telegram.options.agent = false;
+
+bot.catch((err, ctx) => {
+  console.error(`Error in bot:`, err);
+  // You can handle the error here, for example, you may want to send a message to yourself or to the user
+});
+
 
 function showMainMenu(ctx) {
+  console.log('main menu opened')
   ctx.reply('Открыто главное меню',
     Markup.keyboard([
       [{ text: "Кешбэк", request_contact: true, }, 'Меню'],
@@ -48,6 +56,7 @@ function showMainMenu(ctx) {
 }
 
 function showContactOptions(ctx) {
+  console.log('contacts opened')
   ctx.reply('Выберите контакт', {
     reply_markup: {
       inline_keyboard: [
@@ -59,6 +68,7 @@ function showContactOptions(ctx) {
 }
 
 function showTestimonialsMenu(ctx) {
+  console.log('testimonial menu opened')
   ctx.reply('Благодарим за ваш выбор! Пожалуйста, оцените качество сервиса и продукта от 1 до 5.',
     Markup.keyboard([
       ["🤩 Все чудесно, спасибо, 5⭐️⭐️⭐️⭐️⭐️"],
@@ -74,14 +84,17 @@ function showTestimonialsMenu(ctx) {
 bot.start(async (ctx) => { showMainMenu(ctx); })
 
 async function getToken() {
+  console.log('start getting iiko token')
   const url = "https://api-ru.iiko.services/api/1/access_token";
   const body = { apiLogin: "74913501-9de" };
   const headers = { Timeout: "60" };
   let token = await axios.post(url, body, { headers });
+  console.log('finish getting iiko token')
   return token
 }
 
 bot.on("contact", async (ctx) => {
+  console.log('contact requested')
   const url = "https://api-ru.iiko.services/api/1/loyalty/iiko/customer/info";
   const body = { phone: `${ctx.message.contact.phone_number}`, type: "phone", organizationId: "bbb98635-9a82-47d6-ac11-70e949865385", };
   const headers = { "Authorization": "", "Timeout": "60", "Content-Type": "application/json", };
@@ -89,22 +102,23 @@ bot.on("contact", async (ctx) => {
   headers.Authorization = `Bearer ${token?.data?.token}`;
   try {
     let result = await axios.post(url, body, { headers });
+    console.log('contact succesfully getted')
     await ctx.reply(`Номер карты: ${result?.data?.phone}\nБаланс на счету: ${result?.data?.walletBalances[0]?.balance ? result?.data?.walletBalances[0]?.balance : '0'}`)
-  } catch { ctx.reply(`Номер счета не найден в системе`) }
+  } catch { console.log('contact didnt finded or dont exist'); ctx.reply(`Номер счета не найден в системе`) }
 });
 
-bot.hears('Кешбэк', (ctx) => { ctx.reply('Предоставить номер телефона:', Markup.keyboard([Markup.contactRequestButton('Отправить номер')]).resize().extra()); });
+bot.hears('Кешбэк', (ctx) => { console.log('click Кешбэк'); ctx.reply('Предоставить номер телефона:', Markup.keyboard([Markup.contactRequestButton('Отправить номер')]).resize().extra()); });
 
-bot.hears('Меню', (ctx) => { ctx.reply('https://taplink.cc/platinummyata'); });
+bot.hears('Меню', (ctx) => { console.log('click Меню'); ctx.reply('https://taplink.cc/platinummyata'); });
 
-bot.hears('Акции', async (ctx) => { ctx.reply(`${clientText.actions}`) })
+bot.hears('Акции', async (ctx) => { console.log('click Акции'); ctx.reply(`${clientText.actions}`) })
 
-bot.hears(['Контакты'], (ctx) => { showContactOptions(ctx); });
+bot.hears(['Контакты'], (ctx) => { console.log('click Контакты'); showContactOptions(ctx); });
 
-bot.hears(['Оставить отзыв'], (ctx) => { ctx.scene.enter('testimonials'); showTestimonialsMenu(ctx); });
+bot.hears(['Оставить отзыв'], (ctx) => { console.log('click Оставить отзыв'); ctx.scene.enter('testimonials'); showTestimonialsMenu(ctx); });
 
-bot.hears('Главное меню', (ctx) => { showMainMenu(ctx); });
+bot.hears('Главное меню', (ctx) => { console.log('click Главное меню'); showMainMenu(ctx); });
 
-bot.hears('↩️ Назад', (ctx) => { showMainMenu(ctx); });
+bot.hears('↩️ Назад', (ctx) => { console.log('click Назад'); showMainMenu(ctx); });
 
 bot.launch()
