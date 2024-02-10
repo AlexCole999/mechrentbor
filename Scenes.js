@@ -27,16 +27,6 @@ function showTestimonialOptions(ctx) {
     });
 }
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp.elasticemail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: 'myata.platinum.tashkent@gmail.com',
-        pass: '560DE1217307AA88717ADD4C4823F6D13ACA'
-    }
-})
-
 class SceneGenerator {
 
     GenTestimonialScene() {
@@ -44,7 +34,7 @@ class SceneGenerator {
         const testimonials = new Scene('testimonials')
 
         testimonials.enter(async (ctx) => {
-            console.log('Testimonials enter')
+            console.log('Testimonials scene enter')
         })
 
         testimonials.hears("🤩 Все чудесно, спасибо, 5⭐️⭐️⭐️⭐️⭐️", async (ctx) => {
@@ -95,12 +85,31 @@ class SceneGenerator {
 
                     console.log('testimonial text entered');
 
-                    await transporter.sendMail({
-                        from: 'myata.platinum.tashkent@gmail.com',
-                        to: 'myatatashkent@yandex.ru',
-                        subject: `Гость поставил оценку ${ctx.session.state.rating}`,
-                        text: `${resultResponseForOwner}`
-                    }).then(() => { ctx.reply(`${resultResponseForUser}\n\n Отзыв успешно отправлен!`); console.log('testimonial sended to clients mail') })
+                    const transporter = nodemailer.createTransport({
+                        host: 'smtp.elasticemail.com',
+                        port: 587,
+                        secure: false,
+                        pool: false,
+                        auth: {
+                            user: 'myata.platinum.tashkent@gmail.com',
+                            pass: '560DE1217307AA88717ADD4C4823F6D13ACA'
+                        }
+                    })
+
+                    try {
+                        await transporter.sendMail({
+                            from: 'myata.platinum.tashkent@gmail.com',
+                            to: 'myatatashkent@yandex.ru',
+                            subject: `Гость поставил оценку ${ctx.session.state.rating}`,
+                            text: `${resultResponseForOwner}`
+                        })
+                            .then(() => {
+                                ctx.reply(`${resultResponseForUser}\n\n Отзыв успешно отправлен!`);
+                                console.log('testimonial succesfully sended to clients mail')
+                            })
+                    } catch { console.log('ERROR while sending testimonial by smtp 587 mail to client') }
+
+                    transporter.close()
 
                     await showMainMenu(ctx)
 
@@ -121,46 +130,6 @@ class SceneGenerator {
 
         return testimonials
 
-    }
-
-    GenNameScene() {
-        const name = new Scene('name')
-        name.enter((ctx) => ctx.reply('Теперь ты в сцене имени. Представься'))
-        name.on('text', async (ctx) => {
-            const name = ctx.message.text
-            if (name) {
-                await ctx.reply(`Привет, ${name}`)
-                ctx.session.state = { ...ctx.session.state, name: name }
-                console.log(ctx.session)
-                ctx.scene.enter('price')
-            } else {
-                await ctx.reply('Я так и не понял, как тебя зовут')
-                await ctx.scene.reenter()
-            }
-        })
-        name.on('message', (ctx) => ctx.reply('Это явно не твое имя'))
-        return name
-    }
-
-    GenPriceScene() {
-        const price = new Scene('price')
-        price.enter(async (ctx) => {
-            await ctx.reply('Привет! Ты вошел в сцену цены!')
-        })
-        price.on('text', async (ctx) => {
-            const price = Number(ctx.message.text)
-            if (price && price > 0) {
-                await ctx.reply('ура!!')
-                ctx.session.state = { ...ctx.session.state, price: price }
-                console.log(ctx.session)
-                await ctx.scene.leave()
-            } else {
-                await ctx.reply('цену')
-                ctx.scene.reenter()
-            }
-        })
-        price.on('message', (ctx) => ctx.reply('Давай лучше возраст'))
-        return price
     }
 
 }

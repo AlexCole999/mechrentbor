@@ -9,33 +9,32 @@ const nodemailer = require('nodemailer')
 
 const curScene = new SceneGenerator()
 const testimonialScene = curScene.GenTestimonialScene()
-const nameScene = curScene.GenNameScene()
-const priceScene = curScene.GenPriceScene()
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.elasticemail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: 'myata.platinum.tashkent@gmail.com',
-    pass: '560DE1217307AA88717ADD4C4823F6D13ACA'
-  }
-})
+// const transporter = nodemailer.createTransport({
+//   host: 'smtp.elasticemail.com',
+//   port: 465,
+//   secure: true,
+//   auth: {
+//     user: 'myata.platinum.tashkent@gmail.com',
+//     pass: '560DE1217307AA88717ADD4C4823F6D13ACA'
+//   }
+// })
 
 
-bot.hears('1', async (ctx) => {
-  let some = await transporter.sendMail({
-    from: 'myata.platinum.tashkent@gmail.com',
-    to: 'leonid.samograew@gmail.com',
-    subject: 'telegram testimonial'
-  })
-  console.log(some)
-});
+// bot.hears('1', async (ctx) => {
+//   let some = await transporter.sendMail({
+//     from: 'myata.platinum.tashkent@gmail.com',
+//     to: 'leonid.samograew@gmail.com',
+//     subject: 'telegram testimonial'
+//   })
+//   console.log(some)
+// });
 
 const stage = new Stage([testimonialScene])
 
 bot.use(session())
 bot.use(stage.middleware())
+
 bot.telegram.options.agent = false;
 
 bot.catch((err, ctx) => {
@@ -94,7 +93,7 @@ async function getToken() {
 }
 
 bot.on("contact", async (ctx) => {
-  console.log('contact requested')
+  console.log(`contact requested with phone:${ctx.message.contact.phone_number}`)
   const url = "https://api-ru.iiko.services/api/1/loyalty/iiko/customer/info";
   const body = { phone: `${ctx.message.contact.phone_number}`, type: "phone", organizationId: "bbb98635-9a82-47d6-ac11-70e949865385", };
   const headers = { "Authorization": "", "Timeout": "60", "Content-Type": "application/json", };
@@ -104,7 +103,7 @@ bot.on("contact", async (ctx) => {
     let result = await axios.post(url, body, { headers });
     console.log('contact succesfully getted')
     await ctx.reply(`Номер карты: ${result?.data?.phone}\nБаланс на счету: ${result?.data?.walletBalances[0]?.balance ? result?.data?.walletBalances[0]?.balance : '0'}`)
-  } catch { console.log('contact didnt finded or dont exist'); ctx.reply(`Номер счета не найден в системе`) }
+  } catch { console.log('contact didnt finded or doesnt exist'); ctx.reply(`Номер счета не найден в системе`) }
 });
 
 bot.hears('Кешбэк', (ctx) => { console.log('click Кешбэк'); ctx.reply('Предоставить номер телефона:', Markup.keyboard([Markup.contactRequestButton('Отправить номер')]).resize().extra()); });
