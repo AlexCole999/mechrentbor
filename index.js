@@ -1,11 +1,17 @@
 const Telegraf = require('telegraf')
 const { Extra, Markup, Stage, session } = Telegraf
+const https = require('https');
 const config = require('config')
-const bot = new Telegraf(config.get('token'))
 const axios = require('axios');
 const { clientText } = require('./clientText.js');
 const SceneGenerator = require('./Scenes')
 const nodemailer = require('nodemailer')
+
+const bot = new Telegraf(config.get('token'), {
+  telegram: {
+    agent: new https.Agent({ keepAlive: false }),
+  },
+})
 
 const curScene = new SceneGenerator()
 const testimonialScene = curScene.GenTestimonialScene()
@@ -19,6 +25,7 @@ const testimonialScene = curScene.GenTestimonialScene()
 //     pass: '560DE1217307AA88717ADD4C4823F6D13ACA'
 //   }
 // })
+//6593497942:AAEXvOthtull92Zzq2-Iurpjlojxf4vPsdQ
 
 
 // bot.hears('1', async (ctx) => {
